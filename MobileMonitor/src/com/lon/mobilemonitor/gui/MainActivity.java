@@ -7,6 +7,7 @@ import com.lon.mobilemonitor.core.SignalModuleManager;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.view.Menu;
 import android.view.View;
@@ -23,6 +24,45 @@ public class MainActivity extends Activity {
 	private int[] images = new int[] { R.drawable.pic1, R.drawable.pic3,
 			R.drawable.pic2, };
 	SignalModule module;
+
+	@Override
+	public void onBackPressed() {
+		// TODO Auto-generated method stub
+		//super.onBackPressed();
+		
+//		AlertDialog.Builder builder=new AlertDialog.Builder(this);
+//		
+//		builder.setTitle("移动监测");
+//		
+//		builder.setMessage("是否确认退出程序?");
+//		
+//		builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+//			
+//			@Override
+//			public void onClick(DialogInterface dialog, int which) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//		});
+//		
+//		builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+//			
+//			@Override
+//			public void onClick(DialogInterface dialog, int which) {
+//				// TODO Auto-generated method stub
+//				
+//				SignalModuleManager.getInstance().stop();
+//				finish();
+//				
+//			}
+//		});
+//		
+//		
+//		
+//		builder.show();
+//		
+		
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

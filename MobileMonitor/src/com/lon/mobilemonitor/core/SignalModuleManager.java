@@ -3,6 +3,8 @@ package com.lon.mobilemonitor.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.R.integer;
+
 public class SignalModuleManager {
 
 	private List<SignalModule> modulesList = new ArrayList<SignalModule>();
@@ -53,6 +55,14 @@ public class SignalModuleManager {
 	
 	public int getModuleNum() {
 		return modulesList.size();
+	}
+	
+	public void stop() {
+		
+		for(SignalModule module : modulesList)
+		{
+			module.stop();
+		}
 	}
 
 }
