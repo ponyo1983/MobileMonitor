@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<resources>  
+    <string-array name="display_mode">  
+        <item>信号幅度</item>  
+        <item>原始波形</item>
+        <item>信号频谱</item>
+    </string-array>  
+</resources> 
