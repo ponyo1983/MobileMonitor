@@ -444,7 +444,7 @@ public class SignalDetailView extends View {
 					int stop = (int) ((i + 1 - xCursorIndex) / PixelPerData + centerIndex) - 1;
 					if (start < 0)
 						continue;
-					if (stop > signalData.length)
+					if (stop >= signalData.length)
 						break;
 
 					pointsList[pointNum * 8] = i + LeftMargin;
