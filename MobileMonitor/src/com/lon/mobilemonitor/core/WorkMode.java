@@ -12,8 +12,9 @@ public class WorkMode {
 	float upper=0;
 	float lower=0;
 	String unit="";
+	String descriptor=""; //工作模式的描述
 	public WorkMode(byte mode, int sampleRate, int transferCount, int adMax,
-			int adMin, float upper, float lower, String unit) {
+			int adMin, float upper, float lower, String unit,String descriptor) {
 		// TODO Auto-generated constructor stub
 		this.mode=mode;
 		this.sampleRate=sampleRate;
@@ -23,6 +24,7 @@ public class WorkMode {
 		this.upper=upper;
 		this.lower=lower;
 		this.unit=unit;
+		this.descriptor=descriptor;
 		
 	}
 	
@@ -50,6 +52,10 @@ public class WorkMode {
 	public String getUnit()
 	{
 		return unit;
+	}
+	
+	public String getDescriptor() {
+		return descriptor;
 	}
 	
 	public float[] getRealData(byte[] sampleData,int offset,int sLength) {

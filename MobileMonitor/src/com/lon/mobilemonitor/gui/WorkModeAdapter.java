@@ -81,6 +81,7 @@ public class WorkModeAdapter extends BaseAdapter {
 			sb.append("未设置");
 		}
 		else {
+			sb.append(wkMode.getDescriptor()+"--");
 			sb.append("采样率["+wkMode.getSampleRate()+"]");
 			sb.append(" 上限:["+wkMode.getUpper()+"]");
 			sb.append(" 下限:["+wkMode.getLower()+"]");

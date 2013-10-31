@@ -106,6 +106,7 @@ public class WorkModeActivity extends Activity {
 		for (int i = 0; i < cnt; i++) {
 			WorkMode mode = listModes.get(i);
 			StringBuilder sb = new StringBuilder();
+			sb.append(mode.getDescriptor()+"---");
 			sb.append("采样率[" + mode.getSampleRate() + "]");
 			sb.append(" 上限[" + mode.getUpper() + "]");
 			sb.append(" 下限[" + mode.getLower() + "]");

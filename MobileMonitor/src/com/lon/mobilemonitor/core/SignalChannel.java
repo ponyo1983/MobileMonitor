@@ -2,6 +2,7 @@ package com.lon.mobilemonitor.core;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -89,11 +90,19 @@ public class SignalChannel {
 
 				byte num = frame[9]; // 工作模式个数
 				for (int i = 0; i < num; i++) {
-					int index = 10 + i * 27;
-					ByteBuffer byteBuffer = ByteBuffer.wrap(frame, index, 27);
+					int index = 10 + i * 67;
+					ByteBuffer byteBuffer = ByteBuffer.wrap(frame, index, 67);
 					byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
+					byte[] desc=new byte[40];
 					byte mode = byteBuffer.get();
+					byteBuffer.get(desc);
+					int byteCount=0;
+					for(int j=0;j<40;j++)
+					{
+						if(desc[j]==0) break;
+						byteCount++;
+					}
+					String descriptor=new String(desc, 0, byteCount, Charset.forName("GBK"));
 					int sampleRate = byteBuffer.getInt();
 					int transformNum = byteBuffer.getShort();
 					int adMax = byteBuffer.getShort();
@@ -103,14 +112,14 @@ public class SignalChannel {
 
 					int sLen = 0;
 					for (int j = 0; j < 8; j++) {
-						if (frame[index + 19 + j] == 0)
+						if (frame[index + 59 + j] == 0)
 							break;
 						sLen++;
 					}
-					String unit = new String(frame, index + 19, sLen);
+					String unit = new String(frame, index + 59, sLen);
 
 					WorkMode workMode = new WorkMode(mode, sampleRate,
-							transformNum, adMax, adMin, upper, lower, unit);
+							transformNum, adMax, adMin, upper, lower, unit,descriptor);
 					listWorkModes.add(workMode);
 				}
 
