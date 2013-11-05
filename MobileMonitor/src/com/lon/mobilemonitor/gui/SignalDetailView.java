@@ -107,6 +107,26 @@ public class SignalDetailView extends View {
 			invalidate(); //刷新
 		}
 	}
+	
+	public void setLimit(float upper,float lower)
+	{
+		this.upper=upper;
+		this.lower=lower;
+		this.lowerAmpl=lower;
+		this.upperAmpl=upper;
+		
+		if(drawMode==DrawMode.SignalData) //实时数据
+		{
+			
+			this.postInvalidate();
+		}
+		else if(drawMode==DrawMode.SignalAmpl) //信号幅度
+		{
+			
+			this.postInvalidate(); //刷新
+		}
+	}
+	
 	public void zoomIn() {
 		if (drawMode == DrawMode.SignalData) {
 			if (PixelPerData < 20) {

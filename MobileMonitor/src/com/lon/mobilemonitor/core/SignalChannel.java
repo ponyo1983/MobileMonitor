@@ -39,6 +39,7 @@ public class SignalChannel {
 	
 	private List<ISignalChangedListener> signalChangedListeners=new ArrayList<ISignalChangedListener>();
 	
+	private List<IWorkModeChangedListener> workModeChangedListeners=new ArrayList<IWorkModeChangedListener>();
 
 	/*
 	 * @param SignalModule 信号模块
@@ -134,6 +135,7 @@ public class SignalChannel {
 				int mode = frame[9] & 0xff;
 				if (mode == 0xff) {
 					currentWorkMode = null;
+					
 				} else {
 
 					for (int i = 0; i < listWorkModes.size(); i++) {
@@ -144,7 +146,7 @@ public class SignalChannel {
 						}
 					}
 				}
-
+				WorkModeChanged(currentWorkMode); //触发模式改变事件
 				int sampleRate = 0;
 				if (currentWorkMode != null) {
 					sampleRate = currentWorkMode.getSampleRate();
@@ -255,6 +257,15 @@ public class SignalChannel {
 		sendFrame(frame);
 	}
 
+	private void WorkModeChanged(WorkMode mode)
+	{
+		synchronized (workModeChangedListeners) {
+			for(IWorkModeChangedListener listener:workModeChangedListeners)
+			{
+				listener.onWorkModeChanged(mode);
+			}
+		}
+	}
 	private void setSignal(ISignal signal) {
 		if(signal==null)
 		{
@@ -298,7 +309,21 @@ public class SignalChannel {
 	
 	public void removeSignalChangedListener(ISignalChangedListener listener) {
 		synchronized (signalChangedListeners) {
-			signalChangedListeners.add(listener);
+			signalChangedListeners.remove(listener);
+		}
+	}
+	
+	public void addWorkModeChangedListener(IWorkModeChangedListener listener)
+	{
+		synchronized (workModeChangedListeners) {
+			workModeChangedListeners.add(listener);
+		}
+	}
+	
+	public void remodeWorkModeChangedListner(IWorkModeChangedListener listener)
+	{
+		synchronized (workModeChangedListeners) {
+			workModeChangedListeners.remove(listener);
 		}
 	}
 	

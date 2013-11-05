@@ -8,10 +8,10 @@ import android.R.integer;
 public class SignalModuleManager {
 
 	private List<SignalModule> modulesList = new ArrayList<SignalModule>();
-	static final String[] portNames = new String[] { "/dev/s3c2410_serial1",
-			"/dev/s3c2410_serial2", "/dev/s3c2410_serial3" };
-//	static final String[] portNames = new String[] { "/dev/ttyO2",
-//		"/dev/ttyO3", "/dev/ttyO4" };
+//	static final String[] portNames = new String[] { "/dev/s3c2410_serial1",
+//			"/dev/s3c2410_serial2", "/dev/s3c2410_serial3" };
+	static final String[] portNames = new String[] { "/dev/ttyO2",
+		"/dev/ttyO3", "/dev/ttyO4" };
 	static final int Baudrate = 576000;
 
 	private static SignalModuleManager singleton=null;

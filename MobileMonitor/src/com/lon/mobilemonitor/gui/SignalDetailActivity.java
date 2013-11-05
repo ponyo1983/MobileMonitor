@@ -3,7 +3,10 @@ package com.lon.mobilemonitor.gui;
 import com.lon.mobilemonitor.R;
 import com.lon.mobilemonitor.core.ISignal;
 import com.lon.mobilemonitor.core.ISignalChangedListener;
+import com.lon.mobilemonitor.core.IWorkModeChangedListener;
+import com.lon.mobilemonitor.core.SignalChannel;
 import com.lon.mobilemonitor.core.SignalModuleManager;
+import com.lon.mobilemonitor.core.WorkMode;
 
 import android.os.Bundle;
 import android.app.Activity;
@@ -21,6 +24,7 @@ public class SignalDetailActivity extends Activity {
 
 	SignalDetailView signalDetailView;
 	ISignalChangedListener signalChangedListener;
+	IWorkModeChangedListener workModeChangedListener;
 	int channelIndex = 0;
 
 	int secondIndex = 1000;
@@ -56,13 +60,32 @@ public class SignalDetailActivity extends Activity {
 					signalDetailView.addAmplPoint(signal.getACAmpl(),
 							secondIndex++);
 				}
-
 			}
 		};
 
-		SignalModuleManager.getInstance().getChannel(channelIndex)
-				.addSignalChangedListener(signalChangedListener);
-
+		//工作模式改变事件
+		workModeChangedListener=new IWorkModeChangedListener() {
+			
+			@Override
+			public void onWorkModeChanged(WorkMode wkMode) {
+				// TODO Auto-generated method stub
+				if(wkMode!=null)
+				{
+					signalDetailView.setLimit(wkMode.getUpper(), wkMode.getLower());
+				}
+			}
+		};
+		
+		SignalChannel channel=SignalModuleManager.getInstance().getChannel(channelIndex);
+		
+		channel.addSignalChangedListener(signalChangedListener); //信号改变监听
+		channel.addWorkModeChangedListener(workModeChangedListener); //工作模式监听
+		
+		WorkMode wkMode= channel.getCurrentMode();
+		if(wkMode!=null)
+		{
+			signalDetailView.setLimit(wkMode.getUpper(), wkMode.getLower());
+		}
 		// 放大按钮
 		ImageButton button1 = (ImageButton) findViewById(R.id.xZoomIn);
 		button1.setOnClickListener(new View.OnClickListener() {

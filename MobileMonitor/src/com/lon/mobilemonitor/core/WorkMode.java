@@ -1,7 +1,5 @@
 package com.lon.mobilemonitor.core;
 
-import android.R.string;
-
 ///信号通道的工作模式
 public class WorkMode {
 	private byte mode=-1; //无效模式
