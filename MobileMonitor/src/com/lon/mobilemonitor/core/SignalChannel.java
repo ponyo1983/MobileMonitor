@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.lon.mobilemonitor.dsp.DSPUtil;
 import com.lon.mobilemonitor.dsp.FFTPlan;
-import com.lon.mobilemonitor.dsp.SignalAmpl;
+import com.lon.mobilemonitor.dsp.SignalUtil;
 
 import android.util.Log;
 import android.widget.ListView;
@@ -399,7 +399,7 @@ public class SignalChannel {
 	class SignalDSP implements Runnable {
 
 		FFTPlan fftPlan;
-		SignalAmpl amplTool = new SignalAmpl();
+		SignalUtil amplTool = new SignalUtil();
 		DSPUtil util = new DSPUtil();
 		float[] data1 = null;
 		float[] data2 = null;
@@ -413,10 +413,12 @@ public class SignalChannel {
 			// TODO Auto-generated method stub
 
 			IDataBlock dataBlock = addDataBlock(1000, 1000);
+			
+			
 			try {
 				while (!Thread.currentThread().isInterrupted()) {
 					float[] sampleData = dataBlock.getBlock(-1);
-
+					long millisTime=System.currentTimeMillis(); //获取系统时间
 					if (sampleData == null)
 						continue;
 
@@ -425,17 +427,24 @@ public class SignalChannel {
 					int sampleRate = currentWorkMode.getSampleRate();
 					if (sampleData.length != sampleRate)
 						continue;
+					SignalAmpl signalAmplA=new SignalAmpl();
 					//最多每秒计算25次,因为测量的最小的信号的频率是25Hz
 					int amplCnt=sampleRate/25;
 					for(int i=0;i<25;i++)
 					{
 						amplDense[i]=amplTool.calAmpl(sampleData, i*amplCnt,
 								amplCnt);
+						if(amplDense[i]>2)
+						{
+							Log.e("幅度",String.valueOf(amplDense[i]));
+						}
+						signalAmplA.addAmpl(amplDense[i], millisTime+i*40);
 					}
 					//每秒钟计算
-					float signalAmpl = amplTool.calAmpl(sampleData, 0,
-							sampleRate);
-
+//					float signalAmpl = amplTool.calAmpl(sampleData, 0,
+//							sampleRate);
+					float signalAmpl=amplDense[24];
+					
 					if (fftPlan != null && fftPlan.getFFTNum() != sampleRate) {
 						fftPlan = null;
 						System.gc();
@@ -491,8 +500,9 @@ public class SignalChannel {
 						}
 					}
 					if (isSingle) {
-						SignalSingle signal = new SignalSingle(peakIndex[0]
-								+ ignoreLow, signalAmpl, 0);
+//						SignalSingle signal = new SignalSingle(peakIndex[0]
+//								+ ignoreLow, signalAmpl, 0);
+						SignalSingle signal=new SignalSingle(peakIndex[0]+ignoreLow, signalAmplA);
 						signal.putRawData(sampleData);
 						signal.putSpectrumData(dataSpectrum);
 						SignalChannel.this.setSignal(signal);

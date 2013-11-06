@@ -13,6 +13,8 @@ public class SignalSingle implements ISignal{
 	private float[] rawData;
 	private float[] spectrumData;
 	
+	private SignalAmpl signalAmpl;
+	
 	public SignalSingle() {
 		// TODO Auto-generated constructor stub
 	}
@@ -21,6 +23,12 @@ public class SignalSingle implements ISignal{
 		this.freq=freq;
 		this.acAmpl=acAmpl;
 		this.dcAmpl=dcAmpl;
+	}
+	
+	public SignalSingle(float freq,SignalAmpl ampl)
+	{
+		this.freq=freq;
+		this.signalAmpl=ampl;
 	}
 	
 	public float getFrequcy()
@@ -63,7 +71,17 @@ public class SignalSingle implements ISignal{
 		sb.append("单频--");
 		DecimalFormat df=new DecimalFormat();
 		df.applyPattern("0.000");
-		sb.append("幅度["+df.format(acAmpl)+ "]");
+		if(signalAmpl!=null && signalAmpl.getCount()>0)
+		{
+			//最后一个点的幅度
+			int last=signalAmpl.getCount()-1;
+			SignalAmplPoint point=signalAmpl.getAmplPoint(last);
+			sb.append("幅度["+df.format(point.getAmpl())+ "]");
+		}
+		else {
+			sb.append("幅度["+df.format(acAmpl)+ "]");
+		}
+		
 		df.applyPattern("0.00");
 		sb.append("  频率["+df.format(freq)+ "]");
 		
@@ -77,7 +95,7 @@ public class SignalSingle implements ISignal{
 		destSignal.acAmpl=acAmpl;
 		destSignal.freq=freq;
 		destSignal.dcAmpl=dcAmpl;
-	
+		destSignal.signalAmpl=signalAmpl;
 		destSignal.rawData=rawData;
 		
 		destSignal.spectrumData=spectrumData;
@@ -96,6 +114,6 @@ public class SignalSingle implements ISignal{
 	
 	public SignalAmpl getAmpl()
 	{
-		return new SignalAmpl();
+		return signalAmpl;
 	}
 }

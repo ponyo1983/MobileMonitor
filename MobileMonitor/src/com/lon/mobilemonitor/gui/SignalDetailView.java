@@ -7,6 +7,8 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import com.lon.mobilemonitor.R;
+import com.lon.mobilemonitor.core.SignalAmpl;
+import com.lon.mobilemonitor.core.SignalAmplPoint;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -323,7 +325,7 @@ public class SignalDetailView extends View {
 		if(stoped) return;
 		AmplPoint point = new AmplPoint(ampl, millisTime);
 
-		if (amplPoints.size() > 500) {
+		if (amplPoints.size() > 5000) {
 			amplPoints.remove(0);
 		}
 		amplPoints.add(point);
@@ -331,6 +333,27 @@ public class SignalDetailView extends View {
 			postInvalidate(); // Ë¢ÐÂ
 		}
 
+	}
+	public void addSignalAmpl(SignalAmpl ampl)
+	{
+		if(stoped) return;
+		
+		int cnt=ampl.getCount();
+		for(int i=0;i<cnt;i++)
+		{
+			SignalAmplPoint sPoint=	ampl.getAmplPoint(i);
+			AmplPoint point = new AmplPoint(sPoint.getAmpl(), sPoint.getTime());
+
+			if (amplPoints.size() > 5000) {
+				amplPoints.remove(0);
+			}
+			amplPoints.add(point);
+		}
+		if (drawMode == DrawMode.SignalAmpl) {
+			postInvalidate(); // Ë¢ÐÂ
+		}
+		
+		
 	}
 
 	@Override
@@ -679,12 +702,12 @@ public class SignalDetailView extends View {
 			
 
 
-			if (PixelPerSecond > 10) {
+			if (PixelPerSecond > 20) {
 				for (int i = 0; i < pointNum; i++) {
 
-					canvas.drawRect(pointsList[i * 2] - 4,
-							pointsList[i * 2 + 1] - 4, pointsList[i * 2] + 4,
-							pointsList[i * 2 + 1] + 4, paint);
+					canvas.drawRect(pointsList[i * 2] - 2,
+							pointsList[i * 2 + 1] - 2, pointsList[i * 2] + 2,
+							pointsList[i * 2 + 1] + 2, paint);
 
 				}
 			}

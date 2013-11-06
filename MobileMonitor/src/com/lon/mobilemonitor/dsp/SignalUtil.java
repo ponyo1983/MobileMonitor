@@ -1,6 +1,6 @@
 package com.lon.mobilemonitor.dsp;
 
-public class SignalAmpl {
+public class SignalUtil {
 	
     public float calAmpl(float[] data,int offset, int cnt)
     {
