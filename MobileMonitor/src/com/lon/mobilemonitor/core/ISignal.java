@@ -20,4 +20,6 @@ public interface ISignal {
 	public float[] getRawData();
 	public float[] getSpectrumData();
 	
+	public SignalAmpl getAmpl();
+	
 }

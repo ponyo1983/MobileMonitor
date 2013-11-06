@@ -81,6 +81,11 @@ public class SignalUnknown implements ISignal {
 	{
 		return spectrumData;
 	}
+	
+	public SignalAmpl getAmpl()
+	{
+		return new SignalAmpl();
+	}
 
 
 }

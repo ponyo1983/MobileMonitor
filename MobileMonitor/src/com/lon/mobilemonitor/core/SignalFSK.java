@@ -98,5 +98,8 @@ public class SignalFSK implements ISignal {
 	{
 		return spectrumData;
 	}
-
+	public SignalAmpl getAmpl()
+	{
+		return new SignalAmpl();
+	}
 }

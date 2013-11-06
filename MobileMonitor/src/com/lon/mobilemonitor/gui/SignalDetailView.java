@@ -319,9 +319,9 @@ public class SignalDetailView extends View {
 		postInvalidate(); // 刷新
 	}
 
-	public void addAmplPoint(float ampl, int unixTime) {
+	public void addAmplPoint(float ampl, long millisTime) {
 		if(stoped) return;
-		AmplPoint point = new AmplPoint(ampl, unixTime);
+		AmplPoint point = new AmplPoint(ampl, millisTime);
 
 		if (amplPoints.size() > 500) {
 			amplPoints.remove(0);
@@ -574,9 +574,9 @@ public class SignalDetailView extends View {
 
 		// 绘制垂直网格
 		int startX = screenWidth;
-		int startTime = -1;
+		long startTime = -1;
 		if (amplPoints.size() > 0) {
-			startTime = amplPoints.get(amplPoints.size() - 1).unixTime;
+			startTime = amplPoints.get(amplPoints.size() - 1).millisTime;
 		}
 		float timeInterval = GridSize * 1f / PixelPerSecond;
 		paint.setColor(Color.GRAY);
@@ -599,16 +599,16 @@ public class SignalDetailView extends View {
 		if (startTime > 0) {
 			startX = screenWidth;
 			while (true) {
-				calendar.setTimeInMillis(startTime * 1000L);
+				calendar.setTimeInMillis(startTime);
 				canvas.drawText(dfTime.format(calendar.getTime()), startX - 20,
 						screenHeight - BottomMargin + 12, paint);
 				startX -= GridSize;
-				startTime -= timeInterval;
+				startTime -= (long)(timeInterval*1000);
 				if (startX <= LeftMargin) {
 					break;
 				}
 			}
-			calendar.setTimeInMillis(startTime);
+			calendar.setTimeInMillis((long)startTime);
 
 		}
 
@@ -633,7 +633,7 @@ public class SignalDetailView extends View {
 		int matchIndex = -1;
 		float matchX = 0;
 		float matchAmpl = 0;
-		int matchTime = 0;
+		float matchTime = 0;
 		float matchY = 0;
 		if (amplPoints.size() > 0) {
 
@@ -649,7 +649,7 @@ public class SignalDetailView extends View {
 				AmplPoint point = amplPoints.get(length - 1 - i);
 
 				float xPos = screenWidth
-						- (pointBase.unixTime - point.unixTime)
+						- (pointBase.millisTime - point.millisTime)*0.001f
 						* PixelPerSecond;
 
 				if (xPos < LeftMargin) {
@@ -661,14 +661,14 @@ public class SignalDetailView extends View {
 						- (point.ampl - lowerAmpl)
 						* (screenHeight - BottomMargin)
 						/ (upperAmpl - lowerAmpl);
-				if (Math.abs(pointBase.unixTime - point.unixTime
+				if (Math.abs((pointBase.millisTime - point.millisTime)*0.001f
 						- xCursorSecond) < 0.5) {
 					matchIndex = length - 1 - i;
 					matchX = xPos;
 					matchY = pointsList[pointNum * 2 + 1];
 
 					matchAmpl = point.ampl;
-					matchTime = point.unixTime;
+					matchTime = point.millisTime*0.001f;
 
 				}
 				pointNum++;
@@ -698,7 +698,7 @@ public class SignalDetailView extends View {
 			canvas.drawLine(matchX, 0, matchX, screenHeight - BottomMargin,
 					paint);
 			// 绘制日期
-			calendar.setTimeInMillis(matchTime * 1000);
+			calendar.setTimeInMillis((long)(matchTime * 1000));
 			paint.setColor(Color.RED);
 			if (matchX < LeftMargin + (screenWidth - LeftMargin) / 2) // 靠左边
 			{
@@ -977,12 +977,12 @@ public class SignalDetailView extends View {
 
 	class AmplPoint {
 		float ampl; // 幅度
-		int unixTime; // 日期
+		long millisTime; // 日期
 
-		public AmplPoint(float ampl, int unixTime) {
+		public AmplPoint(float ampl, long millisTime) {
 			// TODO Auto-generated constructor stub
 			this.ampl = ampl;
-			this.unixTime = unixTime;
+			this.millisTime = millisTime;
 		}
 	}
 }

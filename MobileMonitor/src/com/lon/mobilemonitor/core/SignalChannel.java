@@ -407,6 +407,7 @@ public class SignalChannel {
 		float[] peakVal = new float[5];
 		int[] peakIndex = new int[5];
 
+		float[] amplDense=new float[25];
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
@@ -424,7 +425,14 @@ public class SignalChannel {
 					int sampleRate = currentWorkMode.getSampleRate();
 					if (sampleData.length != sampleRate)
 						continue;
-
+					//最多每秒计算25次,因为测量的最小的信号的频率是25Hz
+					int amplCnt=sampleRate/25;
+					for(int i=0;i<25;i++)
+					{
+						amplDense[i]=amplTool.calAmpl(sampleData, i*amplCnt,
+								amplCnt);
+					}
+					//每秒钟计算
 					float signalAmpl = amplTool.calAmpl(sampleData, 0,
 							sampleRate);
 

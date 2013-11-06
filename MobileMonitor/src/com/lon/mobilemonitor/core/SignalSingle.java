@@ -94,4 +94,8 @@ public class SignalSingle implements ISignal{
 		return spectrumData;
 	}
 	
+	public SignalAmpl getAmpl()
+	{
+		return new SignalAmpl();
+	}
 }
