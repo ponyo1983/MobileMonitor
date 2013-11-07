@@ -14,6 +14,7 @@ import com.lon.mobilemonitor.dsp.FFTPlan;
 import com.lon.mobilemonitor.dsp.SignalUtil;
 
 import android.R.bool;
+import android.R.integer;
 import android.util.Log;
 import android.widget.ListView;
 
@@ -28,6 +29,13 @@ public class SignalChannel {
 
 	private int channelNum = 0;
 
+	
+	byte[] OneSampleFrame=new byte[16*1024]; //这个地方需要完善，假定采样率固定为8000,多余的表示模式
+	
+	int OneSampleLength=0;
+	
+	int prevSampleNum=-100;
+	
 	ArrayList<ISignal> listSignals = new ArrayList<ISignal>();
 
 	ISignal currentSignal;
@@ -171,6 +179,8 @@ public class SignalChannel {
 						+ ((frame[11] & 0xff) << 16)
 						+ ((frame[12] & 0xff) << 24);
 				int dataLength = (frame[3] & 0xff) + ((frame[4] & 0xff) << 8);
+				currentWorkMode.getModeInfo(OneSampleFrame, 8000*2); //获取模式信息
+				parseOneSample(sampleNum,frame,17,dataLength-10);
 				float[] realData = currentWorkMode.getRealData(frame, 17,
 						dataLength - 10);
 
@@ -186,7 +196,26 @@ public class SignalChannel {
 		}
 
 	}
-
+	
+	private void parseOneSample(int sampleNum,byte[] buffer,int offset,int length)
+	{
+		if(prevSampleNum+1!=sampleNum)
+		{
+			prevSampleNum=sampleNum;
+			OneSampleLength=0; //重置
+		}
+		for(int i=0;i<length;i++)
+		{
+			OneSampleFrame[OneSampleLength]=buffer[i];
+			OneSampleLength++;
+			if(OneSampleLength>=8000*2) //找到一帧
+			{
+				FileManager.getInstance().putSampleData(channelNum, OneSampleFrame);
+				OneSampleLength=0;
+			}
+		}
+	}
+	
 	public void sendFrame(byte[] frame) {
 		this.module.sendFrame(frame);
 	}

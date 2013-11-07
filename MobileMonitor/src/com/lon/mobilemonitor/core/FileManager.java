@@ -40,7 +40,7 @@ public class FileManager {
 	Thread checkThread; //ºÏ≤‚U≈Ã «∑Ò≤Â»Î
 	
 	
-	static FileManager manager=null;
+	private static FileManager manager=null;
 	
 	
 	LinkedList<ChannelData> listStoreDatas=new LinkedList<ChannelData>();

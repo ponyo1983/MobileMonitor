@@ -1,5 +1,7 @@
 package com.lon.mobilemonitor.core;
 
+import java.nio.charset.Charset;
+
 ///信号通道的工作模式
 public class WorkMode {
 	private byte mode=-1; //无效模式
@@ -66,6 +68,64 @@ public class WorkMode {
         }
 
         return data;
+	}
+	
+	public void getModeInfo(byte[] buffer,int offset)
+	{
+		buffer[offset]=mode;
+		
+		byte[] gbk=descriptor.getBytes(Charset.forName("GBK"));
+		//模式描述
+		for(int i=0;i<40;i++)
+		{
+			if(i<gbk.length)
+			{
+				buffer[offset+1+i]=gbk[i];
+			}
+			else {
+				buffer[offset+1+i]=0;
+			}
+		}
+		//采样率
+		for(int i=0;i<4;i++)
+		{
+			buffer[41+i+offset]=(byte)(sampleRate>>(i*8)&0xff);
+		}
+		//每次上传次数
+		buffer[45+offset]=(byte)(transferCount&0xff);
+		buffer[46+offset]=(byte)((transferCount>>8)&0xff);
+		
+		buffer[47+offset]=(byte)(adMax&0xff);
+		buffer[48+offset]=(byte)((adMax>>8)&0xff);
+		
+		buffer[49+offset]=(byte)(adMin&0xff);
+		buffer[50+offset]=(byte)((adMin>>8)&0xff);
+		
+		
+		int intUpper=Float.floatToIntBits(upper);
+		for(int i=0;i<4;i++)
+		{
+			buffer[51+i+offset]=(byte)(intUpper>>(i*8)&0xff);
+		}
+		int intLower=Float.floatToIntBits(lower);
+		for(int i=0;i<4;i++)
+		{
+			buffer[55+i+offset]=(byte)(intLower>>(i*8)&0xff);
+		}
+		
+		byte[] ascii=unit.getBytes(Charset.forName("US-ASCII"));
+		for(int i=0;i<8;i++)
+		{
+			if(i<ascii.length)
+			{
+				buffer[59+offset]=ascii[i];
+			}
+			else
+			{
+				buffer[59+offset]=0;
+			}
+		}
+		
 	}
 	
 	
