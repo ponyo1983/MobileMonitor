@@ -114,7 +114,7 @@ public class SignalDetailView extends View {
 	{
 		this.upper=upper;
 		this.lower=lower;
-		this.lowerAmpl=lower;
+		this.lowerAmpl=0;
 		this.upperAmpl=upper;
 		
 		if(drawMode==DrawMode.SignalData) //实时数据

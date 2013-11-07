@@ -11,11 +11,18 @@ public class SignalUnknown implements ISignal {
 	private float[] rawData;
 	private float[] spectrumData;
 	
+	private SignalAmpl signalAmpl;
+	
 	public SignalUnknown(){}
 	
 	public SignalUnknown(float ampl)
 	{
 		this.acAmpl=ampl;
+	}
+	
+	public SignalUnknown(SignalAmpl signalAmpl)
+	{
+		this.signalAmpl=signalAmpl;
 	}
 	
 	
@@ -56,7 +63,16 @@ public class SignalUnknown implements ISignal {
 		sb.append("未知信号--");
 		DecimalFormat df=new DecimalFormat();
 		df.applyPattern("0.000");
-		sb.append("幅度["+df.format(acAmpl)+ "]");
+		if(signalAmpl!=null && signalAmpl.getCount()>0)
+		{
+			int last=signalAmpl.getCount()-1;
+			SignalAmplPoint point=signalAmpl.getAmplPoint(last);
+			sb.append("幅度["+df.format(point.getAmpl())+ "]");
+		}
+		else {
+			sb.append("幅度["+df.format(acAmpl)+ "]");
+		}
+	
 		
 		return sb.toString();
 	}
@@ -69,6 +85,7 @@ public class SignalUnknown implements ISignal {
 		unkown.dcAmpl=dcAmpl;
 		unkown.rawData=rawData;
 		unkown.spectrumData=spectrumData;
+		unkown.signalAmpl=signalAmpl;
 	}
 
 	@Override
@@ -84,7 +101,7 @@ public class SignalUnknown implements ISignal {
 	
 	public SignalAmpl getAmpl()
 	{
-		return new SignalAmpl();
+		return signalAmpl;
 	}
 
 

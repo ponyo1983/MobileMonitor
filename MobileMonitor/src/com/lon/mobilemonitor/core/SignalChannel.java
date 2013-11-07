@@ -13,6 +13,7 @@ import com.lon.mobilemonitor.dsp.DSPUtil;
 import com.lon.mobilemonitor.dsp.FFTPlan;
 import com.lon.mobilemonitor.dsp.SignalUtil;
 
+import android.R.bool;
 import android.util.Log;
 import android.widget.ListView;
 
@@ -408,6 +409,8 @@ public class SignalChannel {
 		int[] peakIndex = new int[5];
 
 		float[] amplDense=new float[25];
+		long preTime=0;
+		
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
@@ -419,9 +422,15 @@ public class SignalChannel {
 				while (!Thread.currentThread().isInterrupted()) {
 					float[] sampleData = dataBlock.getBlock(-1);
 					long millisTime=System.currentTimeMillis(); //获取系统时间
+					
 					if (sampleData == null)
 						continue;
-
+					if(channelNum==0)
+					{
+					Log.e("时间", String.valueOf(millisTime-preTime));
+					}
+					preTime=millisTime;
+					
 					if (currentWorkMode == null)
 						continue; // 不太可能
 					int sampleRate = currentWorkMode.getSampleRate();
@@ -430,15 +439,30 @@ public class SignalChannel {
 					SignalAmpl signalAmplA=new SignalAmpl();
 					//最多每秒计算25次,因为测量的最小的信号的频率是25Hz
 					int amplCnt=sampleRate/25;
+					boolean largeChanged=false;
 					for(int i=0;i<25;i++)
 					{
 						amplDense[i]=amplTool.calAmpl(sampleData, i*amplCnt,
 								amplCnt);
-						if(amplDense[i]>2)
+						//signalAmplA.addAmpl(amplDense[i], millisTime+i*40);
+						if(i>0) //计算这1秒内的最大的变化的斜率
 						{
-							Log.e("幅度",String.valueOf(amplDense[i]));
+							if(Math.abs(amplDense[i]-amplDense[i-1])>0.1f)
+							{
+								largeChanged=true;
+							}
 						}
-						signalAmplA.addAmpl(amplDense[i], millisTime+i*40);
+					}
+					if(largeChanged)
+					{
+						for(int i=0;i<25;i++)
+						{
+							signalAmplA.addAmpl(amplDense[i], millisTime+i*40);
+						}
+					}
+					else
+					{
+						signalAmplA.addAmpl(amplDense[24], millisTime+24*40); //加入最后一个点
 					}
 					//每秒钟计算
 //					float signalAmpl = amplTool.calAmpl(sampleData, 0,
@@ -512,7 +536,7 @@ public class SignalChannel {
 
 					if (peakIndex[peakIndex.length - 1] < 0) //未知信号
 					{
-						SignalUnknown signal = new SignalUnknown(signalAmpl);
+						SignalUnknown signal = new SignalUnknown(signalAmplA);
 						signal.putRawData(sampleData);
 						signal.putSpectrumData(dataSpectrum);
 						SignalChannel.this.setSignal(signal);
@@ -544,7 +568,7 @@ public class SignalChannel {
 
 					if (matchUM71 == false && matchYP == false) //未知信号
 					{
-						SignalUnknown signal = new SignalUnknown(signalAmpl);
+						SignalUnknown signal = new SignalUnknown(signalAmplA);
 						signal.putRawData(sampleData);
 						signal.putSpectrumData(dataSpectrum);
 						SignalChannel.this.setSignal(signal);
