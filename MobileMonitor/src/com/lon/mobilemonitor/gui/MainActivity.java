@@ -1,6 +1,10 @@
 package com.lon.mobilemonitor.gui;
 
+import java.io.File;
+
 import com.lon.mobilemonitor.R;
+import com.lon.mobilemonitor.core.CalManager;
+import com.lon.mobilemonitor.core.FileManager;
 import com.lon.mobilemonitor.core.SignalModule;
 import com.lon.mobilemonitor.core.SignalModuleManager;
 
@@ -106,7 +110,8 @@ public class MainActivity extends Activity {
 
 			}
 		});
-
+		CalManager.getInstance().ReadCalData(new File("/cal.txt"));
+		FileManager.getInstance().start();
 		SignalModuleManager.getInstance();
 	}
 

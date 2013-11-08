@@ -13,8 +13,9 @@ public class WorkMode {
 	float lower=0;
 	String unit="";
 	String descriptor=""; //工作模式的描述
+	String moduleID="";
 	public WorkMode(byte mode, int sampleRate, int transferCount, int adMax,
-			int adMin, float upper, float lower, String unit,String descriptor) {
+			int adMin, float upper, float lower, String unit,String descriptor,String modIn) {
 		// TODO Auto-generated constructor stub
 		this.mode=mode;
 		this.sampleRate=sampleRate;
@@ -25,6 +26,7 @@ public class WorkMode {
 		this.lower=lower;
 		this.unit=unit;
 		this.descriptor=descriptor;
+		this.moduleID=modIn;
 		
 	}
 	
@@ -118,15 +120,17 @@ public class WorkMode {
 		{
 			if(i<ascii.length)
 			{
-				buffer[59+offset]=ascii[i];
+				buffer[59+i+offset]=ascii[i];
 			}
 			else
 			{
-				buffer[59+offset]=0;
+				buffer[59+i+offset]=0;
 			}
 		}
 		
 	}
+	
+	
 	
 	
 }

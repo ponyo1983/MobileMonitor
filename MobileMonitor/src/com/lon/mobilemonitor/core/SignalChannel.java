@@ -100,11 +100,32 @@ public class SignalChannel {
 
 				byte num = frame[9]; // 工作模式个数
 				for (int i = 0; i < num; i++) {
-					int index = 10 + i * 67;
-					ByteBuffer byteBuffer = ByteBuffer.wrap(frame, index, 67);
+					int index = 10 + i * 77; //加入模块的ID号
+					ByteBuffer byteBuffer = ByteBuffer.wrap(frame, index, 77);
 					byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-					byte[] desc=new byte[40];
+					
 					byte mode = byteBuffer.get();
+					byte[] modID=new byte[10];
+					//模块ID
+					byteBuffer.get(modID);
+					StringBuilder sbBuilder=new StringBuilder();
+					for(int j=0;j<10;j++)
+					{
+						String string=Integer.toHexString(modID[j]&0xff);
+						if(string.length()<2)
+						{
+							sbBuilder.append("0");
+							sbBuilder.append(string);
+						}
+						else
+						{
+							sbBuilder.append(string);
+						}
+						
+					}
+					
+					//模式描述
+					byte[] desc=new byte[40];
 					byteBuffer.get(desc);
 					int byteCount=0;
 					for(int j=0;j<40;j++)
@@ -122,15 +143,16 @@ public class SignalChannel {
 
 					int sLen = 0;
 					for (int j = 0; j < 8; j++) {
-						if (frame[index + 59 + j] == 0)
+						if (frame[index + 69 + j] == 0)
 							break;
 						sLen++;
 					}
-					String unit = new String(frame, index + 59, sLen);
-
+					String unit = new String(frame, index + 69, sLen);
+					String strModID=sbBuilder.toString().toUpperCase();
 					WorkMode workMode = new WorkMode(mode, sampleRate,
-							transformNum, adMax, adMin, upper, lower, unit,descriptor);
+							transformNum, adMax, adMin, upper, lower, unit,descriptor,strModID);
 					listWorkModes.add(workMode);
+					Log.e("模块ID", strModID);
 				}
 
 			}
@@ -201,12 +223,14 @@ public class SignalChannel {
 	{
 		if(prevSampleNum+1!=sampleNum)
 		{
-			prevSampleNum=sampleNum;
+			Log.e("信息", String.valueOf(sampleNum));
+			
 			OneSampleLength=0; //重置
 		}
+		prevSampleNum=sampleNum;
 		for(int i=0;i<length;i++)
 		{
-			OneSampleFrame[OneSampleLength]=buffer[i];
+			OneSampleFrame[OneSampleLength]=buffer[i+offset];
 			OneSampleLength++;
 			if(OneSampleLength>=8000*2) //找到一帧
 			{
@@ -313,11 +337,6 @@ public class SignalChannel {
 			if (s.getSignalType() == signalType) {
 				signal.copyTo(s);
 
-				if(signalType==SignalType.SignalSingle)
-				{
-					Log.e("信号类型","单频");
-				}
-				
 				currentSignal = s;
 				synchronized (signalChangedListeners) {
 					for(ISignalChangedListener listener:signalChangedListeners)
@@ -423,6 +442,17 @@ public class SignalChannel {
 
 	}
 
+	
+	private float getRealAmpl(float ampl)
+	{
+		if(currentWorkMode!=null)
+		{
+			float realAmpl=CalManager.getInstance().getRealAmpl(currentWorkMode.moduleID, channelNum, ampl);
+			return realAmpl;
+		}
+		return ampl;
+	}
+	
 	/*
 	 * 采集信号的数字处理
 	 */
@@ -454,10 +484,7 @@ public class SignalChannel {
 					
 					if (sampleData == null)
 						continue;
-					if(channelNum==0)
-					{
-					Log.e("时间", String.valueOf(millisTime-preTime));
-					}
+					
 					preTime=millisTime;
 					
 					if (currentWorkMode == null)
@@ -473,6 +500,7 @@ public class SignalChannel {
 					{
 						amplDense[i]=amplTool.calAmpl(sampleData, i*amplCnt,
 								amplCnt);
+						amplDense[i]=getRealAmpl(amplDense[i]);
 						//signalAmplA.addAmpl(amplDense[i], millisTime+i*40);
 						if(i>0) //计算这1秒内的最大的变化的斜率
 						{

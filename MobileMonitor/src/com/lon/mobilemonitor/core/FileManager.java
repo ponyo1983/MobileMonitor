@@ -24,7 +24,7 @@ import android.util.Log;
 public class FileManager {
 
 	
-	final String StoreDir="/mnt/usb2";
+	final String StoreDir="/udisk";//"/mnt/usb2";
 	
 	final String[] StoreFiles=new String[]{
 			"m0c0.dat","m0c1.dat","m0c2.dat",
@@ -177,6 +177,7 @@ public class FileManager {
 		 
 		 while(Thread.currentThread().isInterrupted()==false)
 		 {
+			 
 			 try {
 				ChannelData channelData= getSampleData(-1);
 				if(usbExist()==false)
@@ -190,6 +191,7 @@ public class FileManager {
 					}
 					break;
 				}
+				
 				if(channelData!=null)
 				{
 					int channel=channelData.channel;
@@ -290,6 +292,7 @@ public class FileManager {
 	
 	public void start()
 	{
+		if(checkThread!=null && checkThread.isAlive()) return;
 		checkThread=new Thread(new Runnable() {
 			
 			@Override

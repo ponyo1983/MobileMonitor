@@ -166,13 +166,70 @@ public class StoreFile {
 				}
 				else {
 					
+					fileStream.seek(endIndex);
+					fileStream.write(data, 0, writeSize);
+					
+					
+					
+					endIndex+=writeSize;
+					
+					if(startIndex+writeSize>=fileStream.length())
+					{
+						startIndex=FileHeaderLength;
+					}
+					else {
+						startIndex+=writeSize;
+					}
+					
+					//写入到文件头
+					fileStream.seek(32);
+					
+					for(int i=0;i<8;i++)
+					{
+						buffer[i]=(byte)((startIndex>>(i*8))&0xff);
+					}
+					fileStream.write(buffer, 0, 8);
+					
+					for(int i=0;i<8;i++)
+					{
+						buffer[i]=(byte)((endIndex>>(i*8))&0xff);
+					}
+					fileStream.write(buffer, 0, 8);
+					
+					fileStream.getFD().sync(); //flush文件到U盘
+					
 				}
 				
 				
 				
 			}
 			else {
-			
+				endIndex=1024;
+				if(endIndex==startIndex)
+				{
+					startIndex+=writeSize*2;
+				}
+				fileStream.seek(endIndex);
+				fileStream.write(data, 0, writeSize);
+				endIndex+=writeSize;
+				
+				//写入到文件头
+				fileStream.seek(32);
+				
+				for(int i=0;i<8;i++)
+				{
+					buffer[i]=(byte)((startIndex>>(i*8))&0xff);
+				}
+				fileStream.write(buffer, 0, 8);
+				
+				for(int i=0;i<8;i++)
+				{
+					buffer[i]=(byte)((endIndex>>(i*8))&0xff);
+				}
+				fileStream.write(buffer, 0, 8);
+				
+				fileStream.getFD().sync(); //flush文件到U盘
+				
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
