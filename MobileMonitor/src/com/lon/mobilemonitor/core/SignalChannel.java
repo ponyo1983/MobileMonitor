@@ -223,7 +223,7 @@ public class SignalChannel {
 	{
 		if(prevSampleNum+1!=sampleNum)
 		{
-			Log.e("信息", String.valueOf(sampleNum));
+			Log.e("MISS:"+(module.getModuleNum()*3+ channelNum), String.valueOf(sampleNum));
 			
 			OneSampleLength=0; //重置
 		}
@@ -234,7 +234,7 @@ public class SignalChannel {
 			OneSampleLength++;
 			if(OneSampleLength>=8000*2) //找到一帧
 			{
-				FileManager.getInstance().putSampleData(channelNum, OneSampleFrame);
+				FileManager.getInstance().putSampleData(module.getModuleNum()*3+channelNum, OneSampleFrame);
 				OneSampleLength=0;
 			}
 		}
@@ -469,7 +469,7 @@ public class SignalChannel {
 
 		float[] amplDense=new float[25];
 		long preTime=0;
-		
+		float[] dcacAmpl=new float[2];
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
@@ -492,6 +492,11 @@ public class SignalChannel {
 					int sampleRate = currentWorkMode.getSampleRate();
 					if (sampleData.length != sampleRate)
 						continue;
+					
+					//计算交直流幅度
+					amplTool.calDCACAmpl(sampleData, 0, sampleRate, dcacAmpl);
+					dcacAmpl[0]=getRealAmpl(dcacAmpl[0]);
+					dcacAmpl[1]=getRealAmpl(dcacAmpl[1]);
 					SignalAmpl signalAmplA=new SignalAmpl();
 					//最多每秒计算25次,因为测量的最小的信号的频率是25Hz
 					int amplCnt=sampleRate/25;
@@ -521,6 +526,7 @@ public class SignalChannel {
 					{
 						signalAmplA.addAmpl(amplDense[24], millisTime+24*40); //加入最后一个点
 					}
+					
 					//每秒钟计算
 //					float signalAmpl = amplTool.calAmpl(sampleData, 0,
 //							sampleRate);
@@ -583,7 +589,9 @@ public class SignalChannel {
 					if (isSingle) {
 //						SignalSingle signal = new SignalSingle(peakIndex[0]
 //								+ ignoreLow, signalAmpl, 0);
-						SignalSingle signal=new SignalSingle(peakIndex[0]+ignoreLow, signalAmplA);
+						SignalSingle signal=new SignalSingle(peakIndex[0]+ignoreLow, signalAmplA,currentWorkMode.getUnit());
+						signal.setDCAmpl(dcacAmpl[0]);
+						signal.setACAmpl(dcacAmpl[1]);
 						signal.putRawData(sampleData);
 						signal.putSpectrumData(dataSpectrum);
 						SignalChannel.this.setSignal(signal);
@@ -593,7 +601,9 @@ public class SignalChannel {
 
 					if (peakIndex[peakIndex.length - 1] < 0) //未知信号
 					{
-						SignalUnknown signal = new SignalUnknown(signalAmplA);
+						SignalUnknown signal = new SignalUnknown(signalAmplA,currentWorkMode.getUnit());
+						signal.setDCAmpl(dcacAmpl[0]);
+						signal.setACAmpl(dcacAmpl[1]);
 						signal.putRawData(sampleData);
 						signal.putSpectrumData(dataSpectrum);
 						SignalChannel.this.setSignal(signal);
@@ -625,7 +635,9 @@ public class SignalChannel {
 
 					if (matchUM71 == false && matchYP == false) //未知信号
 					{
-						SignalUnknown signal = new SignalUnknown(signalAmplA);
+						SignalUnknown signal = new SignalUnknown(signalAmplA,currentWorkMode.getUnit());
+						signal.setDCAmpl(dcacAmpl[0]);
+						signal.setACAmpl(dcacAmpl[1]);
 						signal.putRawData(sampleData);
 						signal.putSpectrumData(dataSpectrum);
 						SignalChannel.this.setSignal(signal);
@@ -673,8 +685,10 @@ public class SignalChannel {
 								/ underSampleCount;
 					}
 
-					SignalFSK signalFSK = new SignalFSK(signalAmpl,
-							freqCarrier, freqLow);
+					SignalFSK signalFSK = new SignalFSK(signalAmplA,
+							freqCarrier, freqLow,currentWorkMode.getUnit());
+					signalFSK.setDCAmpl(dcacAmpl[0]);
+					signalFSK.setACAmpl(dcacAmpl[1]);
 					signalFSK.putRawData(sampleData);
 					signalFSK.putSpectrumData(dataSpectrum);
 					SignalChannel.this.setSignal(signalFSK);

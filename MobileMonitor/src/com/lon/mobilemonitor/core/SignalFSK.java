@@ -13,6 +13,9 @@ public class SignalFSK implements ISignal {
 	
 	float[] rawData=null;
 	float[] spectrumData=null;
+	SignalAmpl signalAmpl=null;
+	private String unit="";
+	
 	public SignalFSK() {
 		// TODO Auto-generated constructor stub
 	}
@@ -23,7 +26,24 @@ public class SignalFSK implements ISignal {
 		this.freqCarrier=carrier;
 		this.freqLower=lower;
 	}
+	public SignalFSK(SignalAmpl ampl,float carrier,float lower,String unit) {
+		// TODO Auto-generated constructor stub
+		this.signalAmpl=ampl;
+		this.freqCarrier=carrier;
+		this.freqLower=lower;
+		this.unit=unit;
+	}
 	
+	
+	public void setACAmpl(float ampl)
+	{
+		this.acAmpl=ampl;
+	}
+	
+	public void setDCAmpl(float ampl)
+	{
+		this.dcAmpl=ampl;
+	}
 	
 	public void putRawData(float[] data)
 	{
@@ -66,7 +86,9 @@ public class SignalFSK implements ISignal {
 		}
 		DecimalFormat df=new DecimalFormat();
 		df.applyPattern("0.000");
-		sb.append("幅度["+df.format(acAmpl)+ "]");
+//		sb.append("幅度["+df.format(acAmpl)+ "]");
+		sb.append("直流幅度["+df.format(dcAmpl)+unit+ "]");
+		sb.append("  交流幅度["+df.format(acAmpl)+unit+ "]");
 		df.applyPattern("0.00");
 		sb.append("  载频["+df.format(freqCarrier)+ "]");
 		sb.append("  低频["+df.format(freqLower)+ "]");
@@ -85,6 +107,8 @@ public class SignalFSK implements ISignal {
 		fsk.freqLower=freqLower;
 		fsk.rawData=rawData;
 		fsk.spectrumData=spectrumData;
+		fsk.signalAmpl=signalAmpl;
+		fsk.unit=unit;
 	}
 
 	
@@ -100,6 +124,11 @@ public class SignalFSK implements ISignal {
 	}
 	public SignalAmpl getAmpl()
 	{
-		return new SignalAmpl();
+		return signalAmpl;
+	}
+	
+	public String getUnit()
+	{
+		return unit;
 	}
 }

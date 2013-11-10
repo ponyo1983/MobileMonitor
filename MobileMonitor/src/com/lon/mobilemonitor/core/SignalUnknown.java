@@ -13,6 +13,8 @@ public class SignalUnknown implements ISignal {
 	
 	private SignalAmpl signalAmpl;
 	
+	private String unit="";
+	
 	public SignalUnknown(){}
 	
 	public SignalUnknown(float ampl)
@@ -20,11 +22,22 @@ public class SignalUnknown implements ISignal {
 		this.acAmpl=ampl;
 	}
 	
-	public SignalUnknown(SignalAmpl signalAmpl)
+	public SignalUnknown(SignalAmpl signalAmpl,String unit)
 	{
 		this.signalAmpl=signalAmpl;
+		this.unit=unit;
 	}
 	
+	public void setDCAmpl(float ampl)
+	{
+		this.dcAmpl=ampl;
+	}
+	
+	
+	public void setACAmpl(float ampl)
+	{
+		this.acAmpl=ampl;
+	}
 	
 	public void putRawData(float[] data)
 	{
@@ -63,15 +76,17 @@ public class SignalUnknown implements ISignal {
 		sb.append("未知信号--");
 		DecimalFormat df=new DecimalFormat();
 		df.applyPattern("0.000");
-		if(signalAmpl!=null && signalAmpl.getCount()>0)
-		{
-			int last=signalAmpl.getCount()-1;
-			SignalAmplPoint point=signalAmpl.getAmplPoint(last);
-			sb.append("幅度["+df.format(point.getAmpl())+ "]");
-		}
-		else {
-			sb.append("幅度["+df.format(acAmpl)+ "]");
-		}
+//		if(signalAmpl!=null && signalAmpl.getCount()>0)
+//		{
+//			int last=signalAmpl.getCount()-1;
+//			SignalAmplPoint point=signalAmpl.getAmplPoint(last);
+//			sb.append("幅度["+df.format(point.getAmpl())+ "]");
+//		}
+//		else {
+//			sb.append("幅度["+df.format(acAmpl)+ "]");
+//		}
+		sb.append("直流幅度["+df.format(dcAmpl)+unit+ "]");
+		sb.append("  交流幅度["+df.format(acAmpl)+unit+ "]");
 	
 		
 		return sb.toString();
@@ -86,6 +101,7 @@ public class SignalUnknown implements ISignal {
 		unkown.rawData=rawData;
 		unkown.spectrumData=spectrumData;
 		unkown.signalAmpl=signalAmpl;
+		unkown.unit=unit;
 	}
 
 	@Override
@@ -102,6 +118,11 @@ public class SignalUnknown implements ISignal {
 	public SignalAmpl getAmpl()
 	{
 		return signalAmpl;
+	}
+	
+	public String getUnit()
+	{
+		return unit;
 	}
 
 

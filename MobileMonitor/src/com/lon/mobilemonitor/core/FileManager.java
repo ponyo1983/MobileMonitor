@@ -24,14 +24,14 @@ import android.util.Log;
 public class FileManager {
 
 	
-	final String StoreDir="/udisk";//"/mnt/usb2";
+	final String StoreDir="/mnt/usb2";//"/udisk";//"/mnt/usb2";
 	
 	final String[] StoreFiles=new String[]{
 			"m0c0.dat","m0c1.dat","m0c2.dat",
 			"m1c0.dat","m1c1.dat","m1c2.dat",
 			"m2c0.dat","m2c1.dat","m2c2.dat"};
 	
-	final StatFs stat =new StatFs(StoreDir);
+	
 	
 	RandomAccessFile[] fileStreams=new RandomAccessFile[9];
 	StoreFile[] storeFiles=new StoreFile[9];
@@ -112,9 +112,9 @@ public class FileManager {
 	}
 	
 	
-	private boolean usbExist()
+	private int usbExist()
 	{
-		boolean exist=false;
+		int exist=-1; //不存在
 		File Usbfile = new File("/proc/partitions");
 
 		if (Usbfile.exists()) {
@@ -125,7 +125,15 @@ public class FileManager {
 				while ((strLine = br.readLine()) != null) {
 					if (strLine.indexOf("sd") > 0) {
 						// searchFile("usb",Ufile);
-						exist=true;
+						long cap=getUdiskCap();
+						if(cap>512L*1024L*1024L) //至少512M
+						{
+							exist=0;
+						}
+						else
+						{
+							exist=-2;
+						}
 						break;
 					}
 				}
@@ -140,17 +148,29 @@ public class FileManager {
 		return exist;
 	}
 	
+	private long getUdiskCap()
+	{
+		StatFs stat =new StatFs(StoreDir);
+		//计算最大的文件尺寸
+		 long blockSize = stat.getBlockSize();
+		 long totalBlocks = stat.getBlockCount();
+		 long mTotalSize = (long)(totalBlocks * blockSize*(1-0.05f)); //按5%的折损
+		 return mTotalSize;
+	}
 	
 	private void storeData()
 	{
 		//删除其他文件
 		deleteFile(new File(StoreDir));
 		//计算最大的文件尺寸
-		 long blockSize = stat.getBlockSize();
-		 long totalBlocks = stat.getBlockCount();
-		 long mTotalSize = (long)(totalBlocks * blockSize*(1-0.05f)); //按5%的折损
+		 long mTotalSize = getUdiskCap();
 		 
-		 
+		 if(mTotalSize<512L*1024L*1024L)
+		 {
+			 Log.e("usb容量", "usb容量小 ");
+			 return; //U盘容量太小
+			 
+		 }
 		 
 		 for(int i=0;i<StoreFiles.length;i++)
 		 {
@@ -180,7 +200,7 @@ public class FileManager {
 			 
 			 try {
 				ChannelData channelData= getSampleData(-1);
-				if(usbExist()==false)
+				if(usbExist()!=0)
 				{
 					for(int i=0;i<9;i++)
 					{
@@ -222,7 +242,16 @@ public class FileManager {
 	
 	private void checkUSB()
 	{
-		if(usbExist())
+		int exist=usbExist();
+		if(exist==-2)
+		{
+			Log.e("USB", "USB 容量小");
+		}
+		if(exist==0)
+		{
+			Log.e("USB", "USB 存在");
+		}
+		if(exist==0)
 		{
 			if(storeThread==null || storeThread.isAlive()==false)
 			{
@@ -303,7 +332,7 @@ public class FileManager {
 				{
 					try {
 						checkUSB();
-						Thread.sleep(1000);
+						Thread.sleep(5000);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

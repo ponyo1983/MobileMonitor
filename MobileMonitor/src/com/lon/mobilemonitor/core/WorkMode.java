@@ -1,6 +1,7 @@
 package com.lon.mobilemonitor.core;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 ///信号通道的工作模式
 public class WorkMode {
@@ -74,6 +75,10 @@ public class WorkMode {
 	
 	public void getModeInfo(byte[] buffer,int offset)
 	{
+		for(int i=offset;i<buffer.length;i++)
+		{
+			buffer[i]=0;
+		}
 		buffer[offset]=mode;
 		
 		byte[] gbk=descriptor.getBytes(Charset.forName("GBK"));
@@ -125,6 +130,26 @@ public class WorkMode {
 			else
 			{
 				buffer[59+i+offset]=0;
+			}
+		}
+		//当前的时间
+		long millsTime=System.currentTimeMillis();
+		
+		for(int i=0;i<8;i++)
+		{
+			buffer[67+i+offset]=(byte)((millsTime>>(i*8))&0xff);
+		}
+		
+		//模块的ID
+		byte[] modIDASCII=moduleID.getBytes(Charset.forName("US-ASCII"));
+		for(int i=0;i<20;i++)
+		{
+			if(i<modIDASCII.length)
+			{
+				buffer[75+i+offset]=modIDASCII[i];
+			}
+			else {
+				buffer[75+i+offset]=0;
 			}
 		}
 		

@@ -22,4 +22,6 @@ public interface ISignal {
 	
 	public SignalAmpl getAmpl();
 	
+	public String getUnit();
+	
 }

@@ -14,6 +14,7 @@ public class SignalSingle implements ISignal{
 	private float[] spectrumData;
 	
 	private SignalAmpl signalAmpl;
+	private String unit="";
 	
 	public SignalSingle() {
 		// TODO Auto-generated constructor stub
@@ -25,12 +26,22 @@ public class SignalSingle implements ISignal{
 		this.dcAmpl=dcAmpl;
 	}
 	
-	public SignalSingle(float freq,SignalAmpl ampl)
+	public SignalSingle(float freq,SignalAmpl ampl,String unit)
 	{
 		this.freq=freq;
 		this.signalAmpl=ampl;
+		this.unit=unit;
 	}
 	
+	public void setACAmpl(float ampl)
+	{
+		this.acAmpl=ampl;
+	}
+	
+	public void setDCAmpl(float ampl)
+	{
+		this.dcAmpl=ampl;
+	}
 	public float getFrequcy()
 	{
 		return freq;
@@ -71,17 +82,19 @@ public class SignalSingle implements ISignal{
 		sb.append("单频--");
 		DecimalFormat df=new DecimalFormat();
 		df.applyPattern("0.000");
-		if(signalAmpl!=null && signalAmpl.getCount()>0)
-		{
-			//最后一个点的幅度
-			int last=signalAmpl.getCount()-1;
-			SignalAmplPoint point=signalAmpl.getAmplPoint(last);
-			sb.append("幅度["+df.format(point.getAmpl())+ "]");
-		}
-		else {
-			sb.append("幅度["+df.format(acAmpl)+ "]");
-		}
+//		if(signalAmpl!=null && signalAmpl.getCount()>0)
+//		{
+//			//最后一个点的幅度
+//			int last=signalAmpl.getCount()-1;
+//			SignalAmplPoint point=signalAmpl.getAmplPoint(last);
+//			sb.append("幅度["+df.format(point.getAmpl())+ "]");
+//		}
+//		else {
+//			sb.append("幅度["+df.format(acAmpl)+ "]");
+//		}
 		
+		sb.append("直流幅度["+df.format(dcAmpl)+unit+ "]");
+		sb.append("  交流幅度["+df.format(acAmpl)+unit+ "]");
 		df.applyPattern("0.00");
 		sb.append("  频率["+df.format(freq)+ "]");
 		
@@ -99,6 +112,7 @@ public class SignalSingle implements ISignal{
 		destSignal.rawData=rawData;
 		
 		destSignal.spectrumData=spectrumData;
+		destSignal.unit=unit;
 		
 	}
 	@Override
@@ -115,5 +129,10 @@ public class SignalSingle implements ISignal{
 	public SignalAmpl getAmpl()
 	{
 		return signalAmpl;
+	}
+	
+	public String getUnit()
+	{
+		return unit;
 	}
 }

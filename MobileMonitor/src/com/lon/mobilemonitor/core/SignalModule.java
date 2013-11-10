@@ -17,13 +17,15 @@ public class SignalModule {
 	private Thread threadRcv; // 查询参数的读取
 	private ChannelCollection channels; // 信号通道
 
-	public SignalModule(String portName, int baudrate) {
+	int moduleNum=0;
+	public SignalModule(String portName, int baudrate,int moduleNum) {
 		// TODO Auto-generated constructor stub
 		try {
 			this.serialPort = new SerialPort(new File(portName), baudrate, 0);
 			this.serialOutputStream=serialPort.getOutputStream();
+			this.moduleNum=moduleNum;
 			frameManager = new FrameManager(serialPort);
-
+			
 			channels = new ChannelCollection(this, 3);
 
 		} catch (SecurityException e) {
@@ -36,6 +38,10 @@ public class SignalModule {
 
 	}
 
+	public int getModuleNum()
+	{
+		return moduleNum;
+	}
 	public SignalChannel getChannel(int index) {
 		
 		return channels.getChannel(index);

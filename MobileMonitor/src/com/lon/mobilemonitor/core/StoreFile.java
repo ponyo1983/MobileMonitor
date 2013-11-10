@@ -118,7 +118,11 @@ public class StoreFile {
 				buffer[49]=(byte)((SampleRate>>8)&0xff);
 				buffer[50]=2;
 				fileStream.seek(0);
-				fileStream.write(buffer);
+				fileStream.write(buffer, 0, 512);
+				fileStream.getFD().sync();
+				fileStream.seek(512);
+				fileStream.write(buffer, 0, 512);
+				fileStream.getFD().sync();
 			}
 			
 		} catch (IOException e) {
@@ -149,16 +153,21 @@ public class StoreFile {
 				{
 					fileStream.seek(endIndex);
 					fileStream.write(data, 0, writeSize);
-					
+				
 					endIndex+=writeSize;
 					
-					//写入到文件头
+					//写入到文件头(主本)
 					fileStream.seek(40);
 					
 					for(int i=0;i<8;i++)
 					{
 						buffer[i]=(byte)((endIndex>>(i*8))&0xff);
 					}
+					fileStream.write(buffer, 0, 8);
+					
+					fileStream.getFD().sync(); //flush文件到U盘
+					//写入副本
+					fileStream.seek(512+40);
 					fileStream.write(buffer, 0, 8);
 					
 					fileStream.getFD().sync(); //flush文件到U盘
@@ -197,24 +206,57 @@ public class StoreFile {
 					fileStream.write(buffer, 0, 8);
 					
 					fileStream.getFD().sync(); //flush文件到U盘
+					//副本
+					fileStream.seek(512+32);
 					
+					for(int i=0;i<8;i++)
+					{
+						buffer[i]=(byte)((startIndex>>(i*8))&0xff);
+					}
+					fileStream.write(buffer, 0, 8);
+					
+					for(int i=0;i<8;i++)
+					{
+						buffer[i]=(byte)((endIndex>>(i*8))&0xff);
+					}
+					fileStream.write(buffer, 0, 8);
+					
+					fileStream.getFD().sync(); //flush文件到U盘
 				}
 				
 				
 				
 			}
 			else {
-				endIndex=1024;
+				endIndex=FileHeaderLength;
 				if(endIndex==startIndex)
 				{
 					startIndex+=writeSize*2;
 				}
 				fileStream.seek(endIndex);
 				fileStream.write(data, 0, writeSize);
+				
 				endIndex+=writeSize;
 				
-				//写入到文件头
+				//写入到文件头(主本)
 				fileStream.seek(32);
+				
+				for(int i=0;i<8;i++)
+				{
+					buffer[i]=(byte)((startIndex>>(i*8))&0xff);
+				}
+				fileStream.write(buffer, 0, 8);
+				
+				for(int i=0;i<8;i++)
+				{
+					buffer[i]=(byte)((endIndex>>(i*8))&0xff);
+				}
+				fileStream.write(buffer, 0, 8);
+				
+				fileStream.getFD().sync(); //flush文件到U盘
+				
+				//写入到文件头(副本)
+				fileStream.seek(512+32);
 				
 				for(int i=0;i<8;i++)
 				{
