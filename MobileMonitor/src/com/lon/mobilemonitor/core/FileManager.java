@@ -24,7 +24,7 @@ import android.util.Log;
 public class FileManager {
 
 	
-	final String StoreDir="/mnt/usb2";//"/udisk";//"/mnt/usb2";
+	final String StoreDir="/udisk";//"/mnt/usb2";
 	
 	final String[] StoreFiles=new String[]{
 			"m0c0.dat","m0c1.dat","m0c2.dat",

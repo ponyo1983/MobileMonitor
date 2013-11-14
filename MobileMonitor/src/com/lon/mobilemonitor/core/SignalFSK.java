@@ -86,9 +86,17 @@ public class SignalFSK implements ISignal {
 		}
 		DecimalFormat df=new DecimalFormat();
 		df.applyPattern("0.000");
-//		sb.append("幅度["+df.format(acAmpl)+ "]");
-		sb.append("直流幅度["+df.format(dcAmpl)+unit+ "]");
-		sb.append("  交流幅度["+df.format(acAmpl)+unit+ "]");
+		if(signalAmpl!=null && signalAmpl.getCount()>0)
+		{
+			int last=signalAmpl.getCount()-1;
+			SignalAmplPoint point=signalAmpl.getAmplPoint(last);
+			sb.append("幅度["+df.format(point.getAmpl())+unit+ "]");
+		}
+		else {
+			sb.append("幅度["+df.format(acAmpl)+unit+ "]");
+		}
+//		sb.append("直流幅度["+df.format(dcAmpl)+unit+ "]");
+//		sb.append("  交流幅度["+df.format(acAmpl)+unit+ "]");
 		df.applyPattern("0.00");
 		sb.append("  载频["+df.format(freqCarrier)+ "]");
 		sb.append("  低频["+df.format(freqLower)+ "]");

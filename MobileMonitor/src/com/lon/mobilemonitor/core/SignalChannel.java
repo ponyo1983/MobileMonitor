@@ -687,8 +687,8 @@ public class SignalChannel {
 
 					SignalFSK signalFSK = new SignalFSK(signalAmplA,
 							freqCarrier, freqLow,currentWorkMode.getUnit());
-					signalFSK.setDCAmpl(dcacAmpl[0]);
-					signalFSK.setACAmpl(dcacAmpl[1]);
+					//signalFSK.setDCAmpl(dcacAmpl[0]);
+					//signalFSK.setACAmpl(dcacAmpl[1]);
 					signalFSK.putRawData(sampleData);
 					signalFSK.putSpectrumData(dataSpectrum);
 					SignalChannel.this.setSignal(signalFSK);

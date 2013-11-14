@@ -82,16 +82,16 @@ public class SignalSingle implements ISignal{
 		sb.append("单频--");
 		DecimalFormat df=new DecimalFormat();
 		df.applyPattern("0.000");
-//		if(signalAmpl!=null && signalAmpl.getCount()>0)
-//		{
-//			//最后一个点的幅度
-//			int last=signalAmpl.getCount()-1;
-//			SignalAmplPoint point=signalAmpl.getAmplPoint(last);
-//			sb.append("幅度["+df.format(point.getAmpl())+ "]");
-//		}
-//		else {
-//			sb.append("幅度["+df.format(acAmpl)+ "]");
-//		}
+		if(signalAmpl!=null && signalAmpl.getCount()>0)
+		{
+			//最后一个点的幅度
+			int last=signalAmpl.getCount()-1;
+			SignalAmplPoint point=signalAmpl.getAmplPoint(last);
+			sb.append("幅度有效值["+df.format(point.getAmpl())+unit+ "]");
+		}
+		else {
+			sb.append("幅度有效值["+df.format(acAmpl)+unit+ "]");
+		}
 		
 		sb.append("直流幅度["+df.format(dcAmpl)+unit+ "]");
 		sb.append("  交流幅度["+df.format(acAmpl)+unit+ "]");
