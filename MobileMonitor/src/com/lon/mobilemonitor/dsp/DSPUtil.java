@@ -16,10 +16,11 @@ public class DSPUtil {
 	 * 
 	 * @index 峰值的索引
 	 */
-	public void findPeaks(float[] ampl, float[] peaks, int[] index) {
-		int length = ampl.length;
+	public void findPeaks(float[] ampl,int length, float[] peaks, int[] index) {
+		//int length = ampl.length;
 		int peakCnt = Math.min(peaks.length, index.length);
 
+		
 		for (int i = 0; i < index.length; i++)// -1表示没发现极值
 		{
 			index[i] = -1;
@@ -69,7 +70,7 @@ public class DSPUtil {
 
 		}
 
-		findPeaks(ampl, peaks, index);
+		findPeaks(ampl,ampl.length, peaks, index);
 
 	}
 
@@ -77,16 +78,16 @@ public class DSPUtil {
 		findComplexPeaks(signal, signal.length / 2, peaks, index);
 	}
 
-	public void findComplexPeaks(float[] signal, int from, int to,
+	public void findComplexPeaks(float[] signal, float[] ampl, int from, int to,
 			float[] peaks, int[] index) {
 
-		float[] ampl = new float[to - from];
+		//float[] ampl = new float[to - from];
 		for (int i = from; i < to; i++) {
 			ampl[i - from] = signal[2 * i] * signal[2 * i] + signal[2 * i + 1]
 					* signal[2 * i + 1];
 
 		}
-		findPeaks(ampl, peaks, index);
+		findPeaks(ampl,to - from, peaks, index);
 
 	}
 

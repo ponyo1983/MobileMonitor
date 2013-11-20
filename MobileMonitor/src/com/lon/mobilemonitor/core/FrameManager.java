@@ -34,6 +34,7 @@ public class FrameManager {
 		// TODO Auto-generated constructor stub
 		this.serialPort = serialPort;
 		readThread = new Thread(new SerialRead(serialPort));
+		readThread.setPriority(Thread.MAX_PRIORITY);
 		readThread.start();
 
 	}

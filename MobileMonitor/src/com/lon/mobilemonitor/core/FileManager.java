@@ -24,7 +24,9 @@ import android.util.Log;
 public class FileManager {
 
 	
-	final String StoreDir="/udisk";//"/mnt/usb2";
+	private String StoreDir="";//"/udisk";//"/mnt/usb2";
+	
+	static final String[] UDiskList=new String[]{"/mnt/usb2","/udisk"};
 	
 	final String[] StoreFiles=new String[]{
 			"m0c0.dat","m0c1.dat","m0c2.dat",
@@ -125,15 +127,22 @@ public class FileManager {
 				while ((strLine = br.readLine()) != null) {
 					if (strLine.indexOf("sd") > 0) {
 						// searchFile("usb",Ufile);
-						long cap=getUdiskCap();
-						if(cap>512L*1024L*1024L) //至少512M
+						for(String udisk:UDiskList)
 						{
-							exist=0;
+							long cap=getUdiskCap(udisk);
+							//Log.e(udisk, ""+cap);
+							if(cap>512L*1024L*1024L) //至少512M
+							{
+								exist=0;
+								StoreDir=udisk;
+								break;
+							}
+							else
+							{
+								exist=-2;
+							}
 						}
-						else
-						{
-							exist=-2;
-						}
+						
 						break;
 					}
 				}
@@ -148,9 +157,12 @@ public class FileManager {
 		return exist;
 	}
 	
-	private long getUdiskCap()
+	private long getUdiskCap(String mountPos)
 	{
-		StatFs stat =new StatFs(StoreDir);
+		File file=new File(mountPos);
+		if(file.exists()==false) return 0;
+		if(file.isDirectory()==false) return 0;
+		StatFs stat =new StatFs(mountPos);
 		//计算最大的文件尺寸
 		 long blockSize = stat.getBlockSize();
 		 long totalBlocks = stat.getBlockCount();
@@ -163,7 +175,7 @@ public class FileManager {
 		//删除其他文件
 		deleteFile(new File(StoreDir));
 		//计算最大的文件尺寸
-		 long mTotalSize = getUdiskCap();
+		 long mTotalSize = getUdiskCap(StoreDir);
 		 
 		 if(mTotalSize<512L*1024L*1024L)
 		 {
@@ -321,7 +333,23 @@ public class FileManager {
 	
 	public void start()
 	{
+		//判断U盘的加载位置
+		
+		
+		
 		if(checkThread!=null && checkThread.isAlive()) return;
+		
+//		for(String udisk:UDiskList)
+//		{
+//			File file=new File(udisk);
+//			if(file.exists() && file.isDirectory())
+//			{
+//				StoreDir=udisk;
+//				break;
+//			}
+//		}
+//		if(StoreDir.isEmpty()) return;
+		
 		checkThread=new Thread(new Runnable() {
 			
 			@Override

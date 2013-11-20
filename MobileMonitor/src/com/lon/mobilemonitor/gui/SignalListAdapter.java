@@ -79,7 +79,7 @@ public class SignalListAdapter extends BaseAdapter {
 		ISignal signal=moduleManager.getChannel(position).getCurrentSignal();
 		if(signal==null)
 		{
-			sb.append("Œﬁ–≈∫≈ ‰»Î");
+			sb.append("---------");
 		}
 		else {
 			sb.append(signal.getSignalInfo());

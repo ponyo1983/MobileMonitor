@@ -29,6 +29,7 @@ public class SignalChannel {
 
 	private int channelNum = 0;
 
+	private boolean needSpectrum=false;
 	
 	byte[] OneSampleFrame=new byte[16*1024]; //这个地方需要完善，假定采样率固定为8000,多余的表示模式
 	
@@ -62,7 +63,7 @@ public class SignalChannel {
 		listSignals.add(new SignalSingle()); // 单频信号
 		listSignals.add(new SignalFSK());// 移频和UM71信号
 		listSignals.add(new SignalUnknown());// 未知信号
-
+		listSignals.add(new SignalNULL());// 小信号
 	}
 
 	public int getChannelNum() {
@@ -468,8 +469,9 @@ public class SignalChannel {
 		int[] peakIndex = new int[5];
 
 		float[] amplDense=new float[25];
-		long preTime=0;
+		
 		float[] dcacAmpl=new float[2];
+		float[] amplTemp=new float[16*1024];
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
@@ -480,223 +482,260 @@ public class SignalChannel {
 			try {
 				while (!Thread.currentThread().isInterrupted()) {
 					float[] sampleData = dataBlock.getBlock(-1);
-					long millisTime=System.currentTimeMillis(); //获取系统时间
-					
-					if (sampleData == null)
-						continue;
-					
-					preTime=millisTime;
-					
-					if (currentWorkMode == null)
-						continue; // 不太可能
-					int sampleRate = currentWorkMode.getSampleRate();
-					if (sampleData.length != sampleRate)
-						continue;
-					
-					//计算交直流幅度
-					amplTool.calDCACAmpl(sampleData, 0, sampleRate, dcacAmpl);
-					dcacAmpl[0]=getRealAmpl(dcacAmpl[0]);
-					dcacAmpl[1]=getRealAmpl(dcacAmpl[1]);
-					SignalAmpl signalAmplA=new SignalAmpl();
-					//最多每秒计算25次,因为测量的最小的信号的频率是25Hz
-					int amplCnt=sampleRate/25;
-					boolean largeChanged=false;
-					for(int i=0;i<25;i++)
-					{
-						amplDense[i]=amplTool.calAmpl(sampleData, i*amplCnt,
-								amplCnt);
-						amplDense[i]=getRealAmpl(amplDense[i]);
-						//signalAmplA.addAmpl(amplDense[i], millisTime+i*40);
-						if(i>0) //计算这1秒内的最大的变化的斜率
+					SignalModuleManager manager=SignalModuleManager.getInstance();
+					synchronized (manager) {
+						
+						
+						long millisTime=System.currentTimeMillis(); //获取系统时间
+						
+						if (sampleData == null)
+							continue;
+						
+						
+						
+						if (currentWorkMode == null)
+							continue; // 不太可能
+						
+						int sampleRate = currentWorkMode.getSampleRate();
+						if (sampleData.length != sampleRate)
+							continue;
+						//判断信号是否很小，很小就直接忽略
+						float Upper=currentWorkMode.upper;
+						float sampleMaxVal=Float.MIN_VALUE;
+						for(int i=0;i<sampleData.length;i++)
 						{
-							if(Math.abs(amplDense[i]-amplDense[i-1])>0.1f)
+							if(sampleData[i]>sampleMaxVal)
 							{
-								largeChanged=true;
+								sampleMaxVal=sampleData[i];
 							}
 						}
-					}
-					if(largeChanged)
-					{
+						if(sampleMaxVal<0.03f*Upper){
+							SignalChannel.this.setSignal(new SignalNULL()); //无信号输入
+							 continue;
+							}
+						
+					
+						//计算交直流幅度
+						amplTool.calDCACAmpl(sampleData, 0, sampleRate, dcacAmpl);
+						
+						dcacAmpl[0]=getRealAmpl(dcacAmpl[0]);
+						dcacAmpl[1]=getRealAmpl(dcacAmpl[1]);
+						
+						SignalAmpl signalAmplA=new SignalAmpl();
+						//最多每秒计算25次,因为测量的最小的信号的频率是25Hz
+						int amplCnt=sampleRate/25;
+						boolean largeChanged=false;
 						for(int i=0;i<25;i++)
 						{
-							signalAmplA.addAmpl(amplDense[i], millisTime+i*40);
+							amplDense[i]=amplTool.calAmpl(sampleData, i*amplCnt,
+									amplCnt);
+							amplDense[i]=getRealAmpl(amplDense[i]);
+							//signalAmplA.addAmpl(amplDense[i], millisTime+i*40);
+							if(i>0) //计算这1秒内的最大的变化的斜率
+							{
+								if(Math.abs(amplDense[i]-amplDense[i-1])>0.1f)
+								{
+									largeChanged=true;
+								}
+							}
 						}
-					}
-					else
-					{
-						signalAmplA.addAmpl(amplDense[24], millisTime+24*40); //加入最后一个点
-					}
-					
-					//每秒钟计算
-//					float signalAmpl = amplTool.calAmpl(sampleData, 0,
-//							sampleRate);
-					float signalAmpl=amplDense[24];
-					
-					if (fftPlan != null && fftPlan.getFFTNum() != sampleRate) {
-						fftPlan = null;
-						System.gc();
-					}
-					if (fftPlan == null) {
-						fftPlan = new FFTPlan(sampleRate);
-					}
-					if (data1 != null && data1.length < sampleData.length * 2) {
-						data1 = null;
-						System.gc();
-					}
-					if (data2 != null && data2.length < sampleData.length * 2) {
-						data2 = null;
-						System.gc();
-					}
-					if(dataSpectrum!=null && dataSpectrum.length<sampleData.length/2)
-					{
-						dataSpectrum=null;
-					}
-					if (data1 == null) {
-						data1 = new float[sampleData.length * 2];
-					}
-					if (data2 == null) {
-						data2 = new float[sampleData.length * 2];
-					}
-					if(dataSpectrum==null)
-					{
-						dataSpectrum=new float[sampleData.length/2]; //实数的频谱是对称的
-					}
-					System.arraycopy(sampleData, 0, data1, 0, sampleData.length);
-					fftPlan.realForward(data1, 0);
-					
-					//计算频谱
-					int spectrumLen=sampleData.length/2;
-					for(int i=0;i<spectrumLen;i++)
-					{
-						dataSpectrum[i]=(float)Math.sqrt(data1[i*2]*data1[i*2]+data1[i*2+1]*data1[i*2+1]);
-					}
-					
-					int ignoreLow = 5;
-					util.findComplexPeaks(data1, ignoreLow, sampleRate / 2,
-							peakVal, peakIndex); // 忽略直流信息
-
-					if (peakIndex[0] < 0)
-						continue; // 不存在极点
-
-					boolean isSingle = false;
-					if (peakIndex[1] > 0) {
-						float rate = (float) Math.abs((peakVal[0] - peakVal[1])
-								/ peakVal[0]);
-						if (rate >0.98f) {
-							isSingle = true;
+						if(largeChanged)
+						{
+							for(int i=0;i<25;i++)
+							{
+								signalAmplA.addAmpl(amplDense[i], millisTime+i*40);
+							}
 						}
-					}
-					if (isSingle) {
-//						SignalSingle signal = new SignalSingle(peakIndex[0]
-//								+ ignoreLow, signalAmpl, 0);
-						SignalSingle signal=new SignalSingle(peakIndex[0]+ignoreLow, signalAmplA,currentWorkMode.getUnit());
-						signal.setDCAmpl(dcacAmpl[0]);
-						signal.setACAmpl(dcacAmpl[1]);
-						signal.putRawData(sampleData);
-						signal.putSpectrumData(dataSpectrum);
-						SignalChannel.this.setSignal(signal);
+						else
+						{
+							signalAmplA.addAmpl(amplDense[24], millisTime+24*40); //加入最后一个点
+						}
 						
-						continue;
-					}
-
-					if (peakIndex[peakIndex.length - 1] < 0) //未知信号
-					{
-						SignalUnknown signal = new SignalUnknown(signalAmplA,currentWorkMode.getUnit());
-						signal.setDCAmpl(dcacAmpl[0]);
-						signal.setACAmpl(dcacAmpl[1]);
-						signal.putRawData(sampleData);
-						signal.putSpectrumData(dataSpectrum);
-						SignalChannel.this.setSignal(signal);
-						continue; // 不是移频 和UM71信号
-					}
-
-					boolean matchYP = true;
-					boolean matchUM71 = true;
-					float freqShift = 0;
-					int underSampleCount = 1;
-					for (int i = 0; i < peakIndex.length; i++) {
-						if ((peakIndex[i] + ignoreLow < 1600 - 200)
-								|| (peakIndex[i] + ignoreLow > 2600 + 200)) {
-							matchUM71 = false;
+						//每秒钟计算
+//						float signalAmpl = amplTool.calAmpl(sampleData, 0,
+//								sampleRate);
+						float signalAmpl=amplDense[24];
+						
+						//看看幅度是不是很小
+						
+						if (fftPlan != null && fftPlan.getFFTNum() != sampleRate) {
+							fftPlan = null;
+							System.gc();
 						}
-						if ((peakIndex[i] + ignoreLow < 550 - 100)
-								|| (peakIndex[i] + ignoreLow > 850 + 100)) {
-							matchYP = false;
+						if (fftPlan == null) {
+							fftPlan = new FFTPlan(sampleRate);
 						}
+						if (data1 != null && data1.length < sampleData.length * 2) {
+							data1 = null;
+							System.gc();
+						}
+						if (data2 != null && data2.length < sampleData.length * 2) {
+							data2 = null;
+							System.gc();
+						}
+						if(dataSpectrum!=null && dataSpectrum.length<sampleData.length/2)
+						{
+							dataSpectrum=null;
+						}
+						if (data1 == null) {
+							data1 = new float[sampleData.length * 2];
+						}
+						if (data2 == null) {
+							data2 = new float[sampleData.length * 2];
+						}
+						if(dataSpectrum==null)
+						{
+							dataSpectrum=new float[sampleData.length/2]; //实数的频谱是对称的
+						}
+						System.arraycopy(sampleData, 0, data1, 0, sampleData.length);
+						fftPlan.realForward(data1, 0);
+						
+						//计算频谱
+						if (needSpectrum) {
+							int spectrumLen = sampleData.length / 2;
+							for (int i = 0; i < spectrumLen; i++) {
+								dataSpectrum[i] = (float) Math.sqrt(data1[i * 2]
+										* data1[i * 2] + data1[i * 2 + 1]
+										* data1[i * 2 + 1]);
+							}
+						}
+						int ignoreLow = 5;
+						util.findComplexPeaks(data1,amplTemp, ignoreLow, sampleRate / 2,
+								peakVal, peakIndex); // 忽略直流信息
+
+						if (peakIndex[0] < 0)
+							continue; // 不存在极点
+
+						boolean isSingle = false;
+						if (peakIndex[1] > 0) {
+							float rate = (float) Math.abs((peakVal[0] - peakVal[1])
+									/ peakVal[0]);
+							if (rate >0.98f) {
+								isSingle = true;
+							}
+						}
+						if (isSingle) {
+//							SignalSingle signal = new SignalSingle(peakIndex[0]
+//									+ ignoreLow, signalAmpl, 0);
+							SignalSingle signal=new SignalSingle(peakIndex[0]+ignoreLow, signalAmplA,currentWorkMode.getUnit());
+							signal.setDCAmpl(dcacAmpl[0]);
+							signal.setACAmpl(dcacAmpl[1]);
+							signal.putRawData(sampleData);
+							signal.putSpectrumData(dataSpectrum);
+							SignalChannel.this.setSignal(signal);
+							Log.e("单频-Time", String.valueOf(System.currentTimeMillis()-millisTime));
+							continue;
+						}
+
+						if (peakIndex[peakIndex.length - 1] < 0) //未知信号
+						{
+							SignalUnknown signal = new SignalUnknown(signalAmplA,currentWorkMode.getUnit());
+							signal.setDCAmpl(dcacAmpl[0]);
+							signal.setACAmpl(dcacAmpl[1]);
+							signal.putRawData(sampleData);
+							signal.putSpectrumData(dataSpectrum);
+							SignalChannel.this.setSignal(signal);
+							Log.e("Unknown-Time", String.valueOf(System.currentTimeMillis()-millisTime));
+							continue; // 不是移频 和UM71信号
+						}
+
+						boolean matchYP = true;
+						boolean matchUM71 = true;
+						float freqShift = 0;
+						int underSampleCount = 1;
+						for (int i = 0; i < peakIndex.length; i++) {
+							if ((peakIndex[i] + ignoreLow < 1600 - 200)
+									|| (peakIndex[i] + ignoreLow > 2600 + 200)) {
+								matchUM71 = false;
+							}
+							if ((peakIndex[i] + ignoreLow < 550 - 100)
+									|| (peakIndex[i] + ignoreLow > 850 + 100)) {
+								matchYP = false;
+							}
+						}
+						if (matchYP) {
+							freqShift = (peakIndex[0] + peakIndex[1] + 2 * ignoreLow) / 2f;
+							underSampleCount = 30;
+						}
+						if (matchUM71) {
+							freqShift = peakIndex[0] + ignoreLow - 40;
+							underSampleCount = 40;
+						}
+
+						if (matchUM71 == false && matchYP == false) //未知信号
+						{
+							SignalUnknown signal = new SignalUnknown(signalAmplA,currentWorkMode.getUnit());
+							signal.setDCAmpl(dcacAmpl[0]);
+							signal.setACAmpl(dcacAmpl[1]);
+							signal.putRawData(sampleData);
+							signal.putSpectrumData(dataSpectrum);
+							SignalChannel.this.setSignal(signal);
+							Log.e("Unknown-Time", String.valueOf(System.currentTimeMillis()-millisTime));
+							continue;
+						}
+						for (int i = 0; i < sampleData.length; i++) {
+							data2[i * 2] = sampleData[i];
+							data2[i * 2 + 1] = 0;
+						}
+
+						// 频谱搬移
+						util.shiftSignal(data2, freqShift, sampleRate);
+						//Thread.sleep(1);
+						// 滤波
+						util.complexLowFilter(data2, data1);
+						//Thread.sleep(1);
+						// 欠采样
+						util.underSample(data1, underSampleCount);
+						//Thread.sleep(1);
+						// 频谱分析
+						fftPlan.complexForward(data1, 0);
+						//Thread.sleep(1);
+						float freqCarrier = 0;
+						float freqLow = 0;
+
+						if (matchYP) {
+							int signalLength = data1.length / 2;
+							util.findComplexPeaks(data1,amplTemp, 0, signalLength / 2,
+									peakVal, peakIndex);
+							freqLow = Math.abs(peakIndex[0] - peakIndex[1]) * 1f
+									/ underSampleCount;
+							float indexLeft = (peakIndex[0] + peakIndex[1]) / 2f;
+
+							util.findComplexPeaks(data1,amplTemp, signalLength / 2,
+									signalLength, peakVal, peakIndex);
+							float indexRight = signalLength / 2
+									- (peakIndex[0] + peakIndex[1]) / 2f;
+
+							freqCarrier = freqShift + (indexRight - indexLeft + 2)
+									/ 2f / underSampleCount;
+						}
+						if (matchUM71) {
+							util.findComplexPeaks(data1, peakVal, peakIndex);
+							freqCarrier = freqShift + peakIndex[0] * 1f
+									/ underSampleCount;
+							freqLow = Math.abs(peakIndex[1] - peakIndex[2]) / 2f
+									/ underSampleCount;
+						}
+
+						SignalFSK signalFSK = new SignalFSK(signalAmplA,
+								freqCarrier, freqLow,currentWorkMode.getUnit());
+						//signalFSK.setDCAmpl(dcacAmpl[0]);
+						//signalFSK.setACAmpl(dcacAmpl[1]);
+						signalFSK.putRawData(sampleData);
+						signalFSK.putSpectrumData(dataSpectrum);
+						SignalChannel.this.setSignal(signalFSK);
+						
+						
+						
+						Log.e("UM71-Time", String.valueOf(System.currentTimeMillis()-millisTime));
+						
+						
 					}
-					if (matchYP) {
-						freqShift = (peakIndex[0] + peakIndex[1] + 2 * ignoreLow) / 2f;
-						underSampleCount = 30;
-					}
-					if (matchUM71) {
-						freqShift = peakIndex[0] + ignoreLow - 40;
-						underSampleCount = 40;
-					}
-
-					if (matchUM71 == false && matchYP == false) //未知信号
-					{
-						SignalUnknown signal = new SignalUnknown(signalAmplA,currentWorkMode.getUnit());
-						signal.setDCAmpl(dcacAmpl[0]);
-						signal.setACAmpl(dcacAmpl[1]);
-						signal.putRawData(sampleData);
-						signal.putSpectrumData(dataSpectrum);
-						SignalChannel.this.setSignal(signal);
-						continue;
-					}
-					for (int i = 0; i < sampleData.length; i++) {
-						data2[i * 2] = sampleData[i];
-						data2[i * 2 + 1] = 0;
-					}
-
-					// 频谱搬移
-					util.shiftSignal(data2, freqShift, sampleRate);
-					// 滤波
-					util.complexLowFilter(data2, data1);
-					// 欠采样
-					util.underSample(data1, underSampleCount);
-
-					// 频谱分析
-					fftPlan.complexForward(data1, 0);
-
-					float freqCarrier = 0;
-					float freqLow = 0;
-
-					if (matchYP) {
-						int signalLength = data1.length / 2;
-						util.findComplexPeaks(data1, 0, signalLength / 2,
-								peakVal, peakIndex);
-						freqLow = Math.abs(peakIndex[0] - peakIndex[1]) * 1f
-								/ underSampleCount;
-						float indexLeft = (peakIndex[0] + peakIndex[1]) / 2f;
-
-						util.findComplexPeaks(data1, signalLength / 2,
-								signalLength, peakVal, peakIndex);
-						float indexRight = signalLength / 2
-								- (peakIndex[0] + peakIndex[1]) / 2f;
-
-						freqCarrier = freqShift + (indexRight - indexLeft + 2)
-								/ 2f / underSampleCount;
-					}
-					if (matchUM71) {
-						util.findComplexPeaks(data1, peakVal, peakIndex);
-						freqCarrier = freqShift + peakIndex[0] * 1f
-								/ underSampleCount;
-						freqLow = Math.abs(peakIndex[1] - peakIndex[2]) / 2f
-								/ underSampleCount;
-					}
-
-					SignalFSK signalFSK = new SignalFSK(signalAmplA,
-							freqCarrier, freqLow,currentWorkMode.getUnit());
-					//signalFSK.setDCAmpl(dcacAmpl[0]);
-					//signalFSK.setACAmpl(dcacAmpl[1]);
-					signalFSK.putRawData(sampleData);
-					signalFSK.putSpectrumData(dataSpectrum);
-					SignalChannel.this.setSignal(signalFSK);
 					
 					
 
 				}
-			} finally {
+			}  finally {
 				removeDataBlock(dataBlock);
 			}
 
